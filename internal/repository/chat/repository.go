@@ -3,12 +3,12 @@ package chat
 import (
 	"context"
 	"fmt"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
 	"sync"
 	"time"
 
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/repository"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
 	repoModel "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/model"
 	"github.com/sirupsen/logrus"
 )
