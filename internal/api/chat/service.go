@@ -32,10 +32,17 @@ func (i *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*
 }
 
 func (i *Implementation) Delete(ctx context.Context, req *desc.DeleteRequest) (*emptypb.Empty, error) {
-	return &emptypb.Empty{}, i.chatService.Delete(ctx, req.Id)
+	if err := i.chatService.Delete(ctx, req.Id); err != nil {
+		return nil, err
+	}
+
+	return &emptypb.Empty{}, nil
 }
 
 func (i *Implementation) SendMessage(ctx context.Context, req *desc.SendRequest) (*emptypb.Empty, error) {
+	if err := i.chatService.SendMessage(ctx, req.Id, converter.ToChatMessageFromDesc(req.Message)); err != nil {
+		return nil, err
+	}
 
-	return &emptypb.Empty{}, i.chatService.SendMessage(ctx, req.Id, converter.ToChatMessageFromDesc(req.Message))
+	return &emptypb.Empty{}, nil
 }
