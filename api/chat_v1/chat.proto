@@ -36,10 +36,3 @@ message SendRequest {
   ChatMessage message = 2;
 
 }
-
-
-
-
-
-
-
