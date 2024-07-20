@@ -3,6 +3,7 @@ package chat
 import (
 	"context"
 	"fmt"
+	"github.com/jackc/pgx/v4"
 	"sync"
 	"time"
 
@@ -16,13 +17,15 @@ import (
 var _ def.ChatRepository = (*repository)(nil)
 
 type repository struct {
+	db     *pgx.Conn
 	m      sync.RWMutex
 	data   map[int64]*repoModel.Chat
 	lastID int64
 }
 
-func NewRepository() *repository {
+func NewRepository(db *pgx.Conn) *repository {
 	return &repository{
+		db:   db,
 		data: make(map[int64]*repoModel.Chat),
 	}
 }

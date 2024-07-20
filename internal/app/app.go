@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
@@ -35,6 +36,7 @@ func NewApp(name, configDir string, appStartedAt time.Time) *App {
 }
 
 func (app *App) Run() {
+	ctx := context.Background()
 	cfg, err := config.Init(app.configDir)
 	if err != nil {
 		logrus.Fatalf("Config initialization error: %s", err)
@@ -43,6 +45,9 @@ func (app *App) Run() {
 	logrus.Infof("[%s] got config: [%+v]", app.name, *app.cfg)
 
 	dbAdapter := NewDBAdapter()
+	if err = dbAdapter.Connect(ctx); err != nil {
+		logrus.Fatalf("Fail to connect db %s", err)
+	}
 	app.Factory = newFactory(dbAdapter)
 
 	go func() {
