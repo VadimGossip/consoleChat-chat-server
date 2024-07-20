@@ -1,0 +1,12 @@
+version: "3.9"
+
+services:
+  chat-server:
+    image: chat-server
+    container_name: chat-server
+    ports:
+      - 8085:8085
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: always
