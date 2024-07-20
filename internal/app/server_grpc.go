@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"google.golang.org/grpc/reflection"
 	"net"
 
 	"github.com/sirupsen/logrus"
@@ -23,6 +24,7 @@ func NewGrpcServer(port int) *GrpcServer {
 
 func (s *GrpcServer) Listen(grpcRouter func(*grpc.Server)) error {
 	s.server = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
+	reflection.Register(s.server)
 	grpcRouter(s.server)
 
 	var err error
