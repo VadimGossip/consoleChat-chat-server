@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-
 	"github.com/VadimGossip/consoleChat-chat-server/internal/converter"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/service"
 	desc "github.com/VadimGossip/consoleChat-chat-server/pkg/chat_v1"
@@ -21,7 +20,7 @@ func NewImplementation(chatService service.ChatService) *Implementation {
 }
 
 func (i *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	id, err := i.chatService.Create(ctx, req.Usernames)
+	id, err := i.chatService.Create(ctx, converter.ToChatFromDesc(req))
 	if err != nil {
 		return nil, err
 	}

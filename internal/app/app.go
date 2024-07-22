@@ -64,5 +64,9 @@ func (app *App) Run() {
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 	logrus.Infof("[%s] got signal: [%s]", app.name, <-c)
 
+	if err = dbAdapter.Disconnect(ctx); err != nil {
+		logrus.Errorf("Fail to diconnect db %s", err)
+	}
+
 	logrus.Infof("[%s] stopped", app.name)
 }

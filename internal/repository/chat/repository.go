@@ -3,67 +3,85 @@ package chat
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
-	"sync"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/repository"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
-	repoModel "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/model"
+	//"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
+	//repoModel "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/model"
+	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
 )
 
 var _ def.ChatRepository = (*repository)(nil)
 
 type repository struct {
-	db     *pgx.Conn
-	m      sync.RWMutex
-	data   map[int64]*repoModel.Chat
-	lastID int64
+	db *pgx.Conn
 }
 
 func NewRepository(db *pgx.Conn) *repository {
 	return &repository{
-		db:   db,
-		data: make(map[int64]*repoModel.Chat),
+		db: db,
 	}
 }
 
-func (r *repository) Create(_ context.Context, usernames []string) (int64, error) {
-	r.m.Lock()
-	defer r.m.Unlock()
+func (r *repository) BeginTxSerializable(ctx context.Context) (pgx.Tx, error) {
+	return r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+}
 
-	r.lastID++
-	r.data[r.lastID] = &repoModel.Chat{
-		ID:        r.lastID,
-		Users:     usernames,
-		CreatedAt: time.Now(),
-		Messages:  make([]repoModel.Message, 0),
+func (r *repository) StopTx(ctx context.Context, tx pgx.Tx, err error) error {
+	if err != nil {
+		if err := tx.Rollback(ctx); err != nil {
+			logrus.Errorf("error while rollback transaction: %s", err)
+		}
+		return err
 	}
-	logrus.Infof("Chat id %d for users %v", r.lastID, r.data[r.lastID])
-	return r.lastID, nil
+	return tx.Commit(ctx)
+}
+
+func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (int64, error) {
+	chatInsert := sq.Insert("chats").
+		PlaceholderFormat(sq.Dollar).
+		Columns("chat_name", "created_at").
+		Values(name, time.Now()).
+		Suffix("RETURNING id")
+
+	query, args, err := chatInsert.ToSql()
+	if err != nil {
+		return 0, err
+	}
+	var id int64
+	if err = tx.QueryRow(ctx, query, args...).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatId int64, user model.User) error {
+	chatUsersInsert := sq.Insert("chat_users").
+		PlaceholderFormat(sq.Dollar).
+		Columns("chat_id", "user_id", "user_name", "created_at").
+		Values(chatId, user.Id, user.Name, time.Now())
+
+	query, args, err := chatUsersInsert.ToSql()
+	if err != nil {
+		return err
+	}
+	fmt.Println(query, args)
+
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return err
+	}
+	return nil
 }
 
 func (r *repository) Delete(_ context.Context, id int64) error {
-	r.m.Lock()
-	defer r.m.Unlock()
-	if _, ok := r.data[id]; ok {
-		delete(r.data, id)
-		logrus.Infof("Chat id=%d deleted", id)
-		return nil
-	}
+
 	return fmt.Errorf("chat id=%d not found", id)
 }
 
 func (r *repository) SendMessage(_ context.Context, id int64, msg *model.Message) error {
-	r.m.Lock()
-	defer r.m.Unlock()
-	if chat, ok := r.data[id]; ok {
-		chat.Messages = append(chat.Messages, converter.ToRepoFromMessage(msg))
-		logrus.Infof("Message added %+v", *msg)
-		logrus.Infof("All msgs %+v", chat.Messages)
-		return nil
-	}
 	return fmt.Errorf("chat id=%d not found", id)
 }

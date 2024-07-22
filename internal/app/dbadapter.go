@@ -2,14 +2,16 @@ package app
 
 import (
 	"context"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat"
 	"log"
 
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat"
 	"github.com/jackc/pgx/v4"
+	"github.com/sirupsen/logrus"
 )
 
 type DBAdapter struct {
+	db       *pgx.Conn
 	chatRepo repository.ChatRepository
 }
 
@@ -26,12 +28,19 @@ func (d *DBAdapter) Connect(ctx context.Context) error {
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)
 	}
-	defer db.Close(ctx)
 
 	if err = db.Ping(ctx); err != nil {
 		return err
 	}
-	d.chatRepo = chat.NewRepository(db)
+	d.db = db
+	d.chatRepo = chat.NewRepository(d.db)
 
+	return nil
+}
+
+func (d *DBAdapter) Disconnect(ctx context.Context) error {
+	if err := d.db.Close(ctx); err != nil {
+		logrus.Errorf("Error occured on db connection close: %s", err.Error())
+	}
 	return nil
 }

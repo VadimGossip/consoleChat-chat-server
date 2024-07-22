@@ -2,7 +2,7 @@ package chat
 
 import (
 	"context"
-
+	"fmt"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/service"
@@ -21,11 +21,27 @@ func NewService(chatRepository repository.ChatRepository) *service {
 	}
 }
 
-func (s *service) Create(ctx context.Context, usernames []string) (int64, error) {
-	if err := validator.CreateValidation(usernames); err != nil {
+func (s *service) Create(ctx context.Context, chat *model.Chat) (int64, error) {
+	if err := validator.CreateValidation(chat.Users); err != nil {
 		return 0, err
 	}
-	return s.chatRepository.Create(ctx, usernames)
+	tx, err := s.chatRepository.BeginTxSerializable(ctx)
+	if err != nil {
+		return 0, err
+	}
+	id, err := s.chatRepository.CreateChat(ctx, tx, chat.Name)
+	if err != nil {
+		return 0, s.chatRepository.StopTx(ctx, tx, err)
+	}
+
+	for _, user := range chat.Users {
+		if err = s.chatRepository.CreateChatUser(ctx, tx, id, user); err != nil {
+			fmt.Println(err)
+			return 0, s.chatRepository.StopTx(ctx, tx, err)
+		}
+	}
+
+	return id, s.chatRepository.StopTx(ctx, tx, nil)
 }
 
 func (s *service) Delete(ctx context.Context, id int64) error {

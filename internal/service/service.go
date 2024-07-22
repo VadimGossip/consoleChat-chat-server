@@ -7,7 +7,7 @@ import (
 )
 
 type ChatService interface {
-	Create(ctx context.Context, usernames []string) (int64, error)
+	Create(ctx context.Context, chat *model.Chat) (int64, error)
 	Delete(ctx context.Context, id int64) error
 	SendMessage(ctx context.Context, id int64, msg *model.Message) error
 }
