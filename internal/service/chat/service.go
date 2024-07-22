@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"fmt"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/service"
@@ -36,7 +35,6 @@ func (s *service) Create(ctx context.Context, chat *model.Chat) (int64, error) {
 
 	for _, user := range chat.Users {
 		if err = s.chatRepository.CreateChatUser(ctx, tx, id, user); err != nil {
-			fmt.Println(err)
 			return 0, s.chatRepository.StopTx(ctx, tx, err)
 		}
 	}
@@ -44,13 +42,32 @@ func (s *service) Create(ctx context.Context, chat *model.Chat) (int64, error) {
 	return id, s.chatRepository.StopTx(ctx, tx, nil)
 }
 
-func (s *service) Delete(ctx context.Context, id int64) error {
-	return s.chatRepository.Delete(ctx, id)
+func (s *service) Delete(ctx context.Context, chatId int64) error {
+	tx, err := s.chatRepository.BeginTxSerializable(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = s.chatRepository.Delete(ctx, tx, chatId); err != nil {
+		return s.chatRepository.StopTx(ctx, tx, err)
+	}
+
+	return s.chatRepository.StopTx(ctx, tx, nil)
 }
 
-func (s *service) SendMessage(ctx context.Context, id int64, msg *model.Message) error {
+func (s *service) SendMessage(ctx context.Context, msg *model.Message) error {
 	if err := validator.SendValidation(msg); err != nil {
 		return err
 	}
-	return s.chatRepository.SendMessage(ctx, id, msg)
+
+	tx, err := s.chatRepository.BeginTxSerializable(ctx)
+	if err != nil {
+		return err
+	}
+
+	if err = s.chatRepository.SendMessage(ctx, tx, msg); err != nil {
+		return s.chatRepository.StopTx(ctx, tx, err)
+	}
+
+	return s.chatRepository.StopTx(ctx, tx, nil)
 }

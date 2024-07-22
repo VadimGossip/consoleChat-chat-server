@@ -12,6 +12,6 @@ type ChatRepository interface {
 	StopTx(ctx context.Context, tx pgx.Tx, err error) error
 	CreateChat(ctx context.Context, tx pgx.Tx, name string) (int64, error)
 	CreateChatUser(ctx context.Context, tx pgx.Tx, chatId int64, user model.User) error
-	Delete(ctx context.Context, id int64) error
-	SendMessage(ctx context.Context, id int64, msg *model.Message) error
+	Delete(ctx context.Context, tx pgx.Tx, chatId int64) error
+	SendMessage(ctx context.Context, tx pgx.Tx, msg *model.Message) error
 }

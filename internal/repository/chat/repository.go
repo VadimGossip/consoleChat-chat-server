@@ -8,8 +8,7 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/repository"
-	//"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
-	//repoModel "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/model"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
 	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
 )
@@ -60,16 +59,15 @@ func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (in
 }
 
 func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatId int64, user model.User) error {
-	chatUsersInsert := sq.Insert("chat_users").
+	chatUserInsert := sq.Insert("chat_users").
 		PlaceholderFormat(sq.Dollar).
 		Columns("chat_id", "user_id", "user_name", "created_at").
-		Values(chatId, user.Id, user.Name, time.Now())
+		Values(chatId, user.ID, user.Name, time.Now())
 
-	query, args, err := chatUsersInsert.ToSql()
+	query, args, err := chatUserInsert.ToSql()
 	if err != nil {
 		return err
 	}
-	fmt.Println(query, args)
 
 	if _, err = tx.Exec(ctx, query, args...); err != nil {
 		return err
@@ -77,11 +75,40 @@ func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatId int64
 	return nil
 }
 
-func (r *repository) Delete(_ context.Context, id int64) error {
+func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatId int64) error {
+	chatDelete := sq.Delete("chats").
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{"id": chatId})
 
-	return fmt.Errorf("chat id=%d not found", id)
+	query, args, err := chatDelete.ToSql()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		fmt.Println(err)
+		return err
+	}
+
+	return nil
 }
 
-func (r *repository) SendMessage(_ context.Context, id int64, msg *model.Message) error {
-	return fmt.Errorf("chat id=%d not found", id)
+func (r *repository) SendMessage(ctx context.Context, tx pgx.Tx, msg *model.Message) error {
+	repoMsg := converter.ToRepoFromMessage(msg)
+
+	msgInsert := sq.Insert("chat_messages").
+		PlaceholderFormat(sq.Dollar).
+		Columns("chat_id", "user_id", "text", "created_at").
+		Values(repoMsg.ChatID, repoMsg.UserID, repoMsg.Text, repoMsg.CreatedAt)
+
+	query, args, err := msgInsert.ToSql()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return err
+	}
+
+	return nil
 }

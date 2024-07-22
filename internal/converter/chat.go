@@ -7,7 +7,7 @@ import (
 
 func ToChatUserFromDesc(user *desc.User) model.User {
 	return model.User{
-		Id:   user.Id,
+		ID:   user.Id,
 		Name: user.Name,
 	}
 }
@@ -27,10 +27,11 @@ func ToChatFromDesc(chat *desc.CreateRequest) *model.Chat {
 	}
 }
 
-func ToChatMessageFromDesc(msg *desc.ChatMessage) *model.Message {
+func ToChatMessageFromDesc(req *desc.SendRequest) *model.Message {
 	return &model.Message{
-		User:      ToChatUserFromDesc(msg.User),
-		Text:      msg.Text,
-		CreatedAt: msg.CreatedAt.AsTime(),
+		ChatID:    req.Id,
+		UserID:    req.Message.UserId,
+		Text:      req.Message.Text,
+		CreatedAt: req.Message.CreatedAt.AsTime(),
 	}
 }

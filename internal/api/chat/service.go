@@ -39,7 +39,7 @@ func (i *Implementation) Delete(ctx context.Context, req *desc.DeleteRequest) (*
 }
 
 func (i *Implementation) SendMessage(ctx context.Context, req *desc.SendRequest) (*emptypb.Empty, error) {
-	if err := i.chatService.SendMessage(ctx, req.Id, converter.ToChatMessageFromDesc(req.Message)); err != nil {
+	if err := i.chatService.SendMessage(ctx, converter.ToChatMessageFromDesc(req)); err != nil {
 		return nil, err
 	}
 
