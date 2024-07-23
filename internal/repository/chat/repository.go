@@ -30,7 +30,7 @@ func (r *repository) BeginTxSerializable(ctx context.Context) (pgx.Tx, error) {
 
 func (r *repository) StopTx(ctx context.Context, tx pgx.Tx, err error) error {
 	if err != nil {
-		if rbErr := tx.Rollback(ctx); err != nil {
+		if rbErr := tx.Rollback(ctx); rbErr != nil {
 			logrus.Errorf("error while rollback transaction: %s", rbErr)
 		}
 		return err
