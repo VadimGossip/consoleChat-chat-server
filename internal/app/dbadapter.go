@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"log"
 
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
@@ -11,19 +13,17 @@ import (
 )
 
 type DBAdapter struct {
+	cfg      model.DbCfg
 	db       *pgx.Conn
 	chatRepo repository.ChatRepository
 }
 
-func NewDBAdapter() *DBAdapter {
-	return &DBAdapter{}
+func NewDBAdapter(cfg model.DbCfg) *DBAdapter {
+	return &DBAdapter{cfg: cfg}
 }
 
-const (
-	dbDSN = "host=pg-chat-server port=5432 dbname=chat-server-db user=postgres password=postgres sslmode=disable"
-)
-
 func (d *DBAdapter) Connect(ctx context.Context) error {
+	dbDSN := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s", d.cfg.Host, d.cfg.Port, d.cfg.Name, d.cfg.Username, d.cfg.Password, d.cfg.SSLMode)
 	db, err := pgx.Connect(ctx, dbDSN)
 	if err != nil {
 		log.Fatalf("failed to connect to database: %v", err)

@@ -44,7 +44,7 @@ func (app *App) Run() {
 	app.cfg = cfg
 	logrus.Infof("[%s] got config: [%+v]", app.name, *app.cfg)
 
-	dbAdapter := NewDBAdapter()
+	dbAdapter := NewDBAdapter(cfg.Db)
 	if err = dbAdapter.Connect(ctx); err != nil {
 		logrus.Fatalf("Fail to connect db %s", err)
 	}

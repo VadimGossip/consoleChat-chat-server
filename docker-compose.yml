@@ -4,9 +4,29 @@ volumes:
   postgres_volume:
 
 services:
+  pg-chat-server:
+    image: postgres:14-alpine3.17
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=chat-server-db
+    ports:
+      - "5432:5432"
+    restart: always
+    networks:
+      - chat-server-network
+    volumes:
+      - postgres_volume:/var/lib/postgresql/data
   chat-server:
     image: chat-server
     container_name: chat-server
+    environment:
+     - DB_HOST=pg-chat-server
+     - DB_PORT=5432
+     - DB_USERNAME=postgres
+     - DB_NAME=chat-server-db
+     - DB_SSLMODE=disable
+     - DB_PASSWORD=postgres
     ports:
       - 8085:8085
     build:
@@ -15,19 +35,23 @@ services:
     restart: always
     networks:
      - chat-server-network
-  pg-chat-server:
-    image: postgres:14-alpine3.17
+    depends_on:
+      - pg-chat-server
+  migrator:
+    build:
+      context: .
+      dockerfile: migration.Dockerfile
+    restart: on-failure
     environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=chat-server-pg
-    ports:
-      - "5432:5432"
-    restart: always
+      - DB_HOST=pg-chat-server
+      - DB_PORT=5432
+      - DB_USERNAME=postgres
+      - DB_NAME=chat-server-db
+      - DB_SSLMODE=disable
+      - DB_PASSWORD=postgres
+      - MIGRATION_DIR=./migrations
     networks:
       - chat-server-network
-    volumes:
-      - postgres_volume:/var/lib/postgresql/data
 
 networks:
   chat-server-network:
