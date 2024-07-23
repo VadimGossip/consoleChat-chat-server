@@ -2,7 +2,6 @@ package chat
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	sq "github.com/Masterminds/squirrel"
@@ -86,7 +85,6 @@ func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatID int64) error 
 	}
 
 	if _, err = tx.Exec(ctx, query, args...); err != nil {
-		fmt.Println(err)
 		return err
 	}
 
