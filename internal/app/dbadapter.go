@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"log"
 
+	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat"
 	"github.com/jackc/pgx/v4"

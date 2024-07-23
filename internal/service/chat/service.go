@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/service"
@@ -42,13 +43,13 @@ func (s *service) Create(ctx context.Context, chat *model.Chat) (int64, error) {
 	return id, s.chatRepository.StopTx(ctx, tx, nil)
 }
 
-func (s *service) Delete(ctx context.Context, chatId int64) error {
+func (s *service) Delete(ctx context.Context, chatID int64) error {
 	tx, err := s.chatRepository.BeginTxSerializable(ctx)
 	if err != nil {
 		return err
 	}
 
-	if err = s.chatRepository.Delete(ctx, tx, chatId); err != nil {
+	if err = s.chatRepository.Delete(ctx, tx, chatID); err != nil {
 		return s.chatRepository.StopTx(ctx, tx, err)
 	}
 

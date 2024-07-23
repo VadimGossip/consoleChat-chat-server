@@ -13,10 +13,7 @@ func parseConfigFile(configDir string) error {
 }
 
 func setFromEnv(cfg *model.Config) error {
-	if err := envconfig.Process("db", &cfg.Db); err != nil {
-		return err
-	}
-	return nil
+	return envconfig.Process("db", &cfg.Db)
 }
 
 func unmarshal(cfg *model.Config) error {

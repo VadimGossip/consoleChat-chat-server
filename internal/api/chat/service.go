@@ -2,6 +2,7 @@ package chat
 
 import (
 	"context"
+
 	"github.com/VadimGossip/consoleChat-chat-server/internal/converter"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/service"
 	desc "github.com/VadimGossip/consoleChat-chat-server/pkg/chat_v1"

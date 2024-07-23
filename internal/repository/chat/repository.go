@@ -31,8 +31,8 @@ func (r *repository) BeginTxSerializable(ctx context.Context) (pgx.Tx, error) {
 
 func (r *repository) StopTx(ctx context.Context, tx pgx.Tx, err error) error {
 	if err != nil {
-		if err := tx.Rollback(ctx); err != nil {
-			logrus.Errorf("error while rollback transaction: %s", err)
+		if rbErr := tx.Rollback(ctx); err != nil {
+			logrus.Errorf("error while rollback transaction: %s", rbErr)
 		}
 		return err
 	}
@@ -58,11 +58,11 @@ func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (in
 	return id, nil
 }
 
-func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatId int64, user model.User) error {
+func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatID int64, user model.User) error {
 	chatUserInsert := sq.Insert("chat_users").
 		PlaceholderFormat(sq.Dollar).
 		Columns("chat_id", "user_id", "user_name", "created_at").
-		Values(chatId, user.ID, user.Name, time.Now())
+		Values(chatID, user.ID, user.Name, time.Now())
 
 	query, args, err := chatUserInsert.ToSql()
 	if err != nil {
@@ -75,10 +75,10 @@ func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatId int64
 	return nil
 }
 
-func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatId int64) error {
+func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatID int64) error {
 	chatDelete := sq.Delete("chats").
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": chatId})
+		Where(sq.Eq{"id": chatID})
 
 	query, args, err := chatDelete.ToSql()
 	if err != nil {
