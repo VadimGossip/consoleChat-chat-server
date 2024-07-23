@@ -20,7 +20,7 @@ func NewDBAdapter() *DBAdapter {
 }
 
 const (
-	dbDSN = "host=localhost port=54321 dbname=chat-server-db user=postgres password=postgres sslmode=disable"
+	dbDSN = "host=pg-chat-server port=5432 dbname=chat-server-db user=postgres password=postgres sslmode=disable"
 )
 
 func (d *DBAdapter) Connect(ctx context.Context) error {

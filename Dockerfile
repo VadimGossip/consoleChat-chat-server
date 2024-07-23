@@ -1,17 +1,19 @@
-FROM golang:1.22-alpine AS builder
+##
+## Stage 1
+##
+FROM golang:1.22-alpine AS build
 
-# Move to working directory (/build).
 WORKDIR /build
+ADD . /build
+RUN go build -o app cmd/main.go
 
-# Copy and download dependency using go mod.
-COPY go.mod go.sum ./
-RUN go mod download
+##
+## Stage 2
+##
+FROM alpine:latest
 
-# Copy the code into the container.
-COPY . ./
+WORKDIR /app
+COPY --from=build /build/app /app/chat-server
+COPY --from=build /build/config/config.yml /app/config/config.yml
 
-# Set necessary environment variables needed
-# for our image and build the sender.
-RUN go build -o chat-server cmd/main.go
-
-ENTRYPOINT ["./chat-server"]
+CMD ["./chat-server"]
