@@ -16,4 +16,5 @@ WORKDIR /app
 COPY --from=build /build/app /app/chat-server
 COPY --from=build /build/config/config.yml /app/config/config.yml
 
+EXPOSE $APP_PORT
 CMD ["./chat-server"]

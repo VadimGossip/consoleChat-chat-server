@@ -21,6 +21,7 @@ services:
     image: chat-server
     container_name: chat-server
     environment:
+     - APP_PORT=8085
      - DB_HOST=pg-chat-server
      - DB_PORT=5432
      - DB_USERNAME=postgres
