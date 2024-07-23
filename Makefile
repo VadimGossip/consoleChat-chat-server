@@ -34,14 +34,6 @@ generate-chat-api:
 build:
 	GOOS=linux GOARCH=amd64 go build -o chat-server cmd/main.go
 
-copy-to-server:
-	scp chat-server v_voronin@95.174.94.156:
-
-docker-build-and-push:
-	docker buildx build --no-cache --platform linux/amd64 -t pgregistry.cr.cloud.ru/chat-server:v0.0.1 .
-	docker login pgregistry.cr.cloud.ru -u f921987766c413d6b9e152f97ef15b5d -p eddce5e8de0798cd6ce2319f2cd2b8d9
-	docker push pgregistry.cr.cloud.ru/chat-server:v0.0.1
-
 local-migration-status:
 	$(LOCAL_BIN)/goose -dir ${LOCAL_MIGRATION_DIR} postgres ${LOCAL_MIGRATION_DSN} status -v
 
