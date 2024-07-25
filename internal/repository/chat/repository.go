@@ -14,12 +14,12 @@ import (
 
 const (
 	chats        string = "chats"
-	columnId     string = "id"
+	columnID     string = "id"
 	chatName     string = "chat_name"
 	createdAt    string = "created_at"
 	chatUsers    string = "chat_users"
-	chatId       string = "chat_id"
-	userId       string = "user_id"
+	columnChatID string = "chat_id"
+	userID       string = "user_id"
 	username     string = "username"
 	chatMessages string = "chat_messages"
 	text         string = "text"
@@ -56,7 +56,7 @@ func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (in
 		PlaceholderFormat(sq.Dollar).
 		Columns(chatName, createdAt).
 		Values(name, time.Now()).
-		Suffix("RETURNING " + columnId)
+		Suffix("RETURNING " + columnID)
 
 	query, args, err := chatInsert.ToSql()
 	if err != nil {
@@ -73,7 +73,7 @@ func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (in
 func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatID int64, user model.User) error {
 	chatUserInsert := sq.Insert(chatUsers).
 		PlaceholderFormat(sq.Dollar).
-		Columns(chatId, userId, username, createdAt).
+		Columns(columnChatID, userID, username, createdAt).
 		Values(chatID, user.ID, user.Name, time.Now())
 
 	query, args, err := chatUserInsert.ToSql()
@@ -90,7 +90,7 @@ func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatID int64
 func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatID int64) error {
 	chatDelete := sq.Delete(chats).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{columnId: chatID})
+		Where(sq.Eq{columnID: chatID})
 
 	query, args, err := chatDelete.ToSql()
 	if err != nil {
@@ -109,7 +109,7 @@ func (r *repository) SendMessage(ctx context.Context, tx pgx.Tx, msg *model.Mess
 
 	msgInsert := sq.Insert(chatMessages).
 		PlaceholderFormat(sq.Dollar).
-		Columns(chatId, userId, text, createdAt).
+		Columns(columnChatID, userID, text, createdAt).
 		Values(repoMsg.ChatID, repoMsg.UserID, repoMsg.Text, repoMsg.CreatedAt)
 
 	query, args, err := msgInsert.ToSql()
