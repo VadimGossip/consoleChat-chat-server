@@ -6,8 +6,8 @@ import (
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 )
 
-func CreateValidation(usernames []string) error {
-	if len(usernames) == 0 {
+func CreateValidation(users []model.User) error {
+	if len(users) == 0 {
 		return fmt.Errorf("can't create chat without users")
 	}
 	return nil

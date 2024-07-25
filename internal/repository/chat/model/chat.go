@@ -5,14 +5,8 @@ import (
 )
 
 type Message struct {
-	From      string
+	ChatID    int64
+	UserID    int64
 	Text      string
 	CreatedAt time.Time
-}
-
-type Chat struct {
-	ID        int64
-	Users     []string
-	CreatedAt time.Time
-	Messages  []Message
 }

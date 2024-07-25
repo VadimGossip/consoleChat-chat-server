@@ -2,65 +2,124 @@ package chat
 
 import (
 	"context"
-	"fmt"
-	"sync"
 	"time"
 
+	sq "github.com/Masterminds/squirrel"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/converter"
-	repoModel "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat/model"
+	"github.com/jackc/pgx/v4"
 	"github.com/sirupsen/logrus"
+)
+
+const (
+	chats        string = "chats"
+	columnID     string = "id"
+	chatName     string = "chat_name"
+	createdAt    string = "created_at"
+	chatUsers    string = "chat_users"
+	columnChatID string = "chat_id"
+	userID       string = "user_id"
+	username     string = "username"
+	chatMessages string = "chat_messages"
+	text         string = "text"
 )
 
 var _ def.ChatRepository = (*repository)(nil)
 
 type repository struct {
-	m      sync.RWMutex
-	data   map[int64]*repoModel.Chat
-	lastID int64
+	db *pgx.Conn
 }
 
-func NewRepository() *repository {
+func NewRepository(db *pgx.Conn) *repository {
 	return &repository{
-		data: make(map[int64]*repoModel.Chat),
+		db: db,
 	}
 }
 
-func (r *repository) Create(_ context.Context, usernames []string) (int64, error) {
-	r.m.Lock()
-	defer r.m.Unlock()
-
-	r.lastID++
-	r.data[r.lastID] = &repoModel.Chat{
-		ID:        r.lastID,
-		Users:     usernames,
-		CreatedAt: time.Now(),
-		Messages:  make([]repoModel.Message, 0),
-	}
-	logrus.Infof("Chat id %d for users %v", r.lastID, r.data[r.lastID])
-	return r.lastID, nil
+func (r *repository) BeginTxSerializable(ctx context.Context) (pgx.Tx, error) {
+	return r.db.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 }
 
-func (r *repository) Delete(_ context.Context, id int64) error {
-	r.m.Lock()
-	defer r.m.Unlock()
-	if _, ok := r.data[id]; ok {
-		delete(r.data, id)
-		logrus.Infof("Chat id=%d deleted", id)
-		return nil
+func (r *repository) StopTx(ctx context.Context, tx pgx.Tx, err error) error {
+	if err != nil {
+		if rbErr := tx.Rollback(ctx); rbErr != nil {
+			logrus.Errorf("error while rollback transaction: %s", rbErr)
+		}
+		return err
 	}
-	return fmt.Errorf("chat id=%d not found", id)
+	return tx.Commit(ctx)
 }
 
-func (r *repository) SendMessage(_ context.Context, id int64, msg *model.Message) error {
-	r.m.Lock()
-	defer r.m.Unlock()
-	if chat, ok := r.data[id]; ok {
-		chat.Messages = append(chat.Messages, converter.ToRepoFromMessage(msg))
-		logrus.Infof("Message added %+v", *msg)
-		logrus.Infof("All msgs %+v", chat.Messages)
-		return nil
+func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (int64, error) {
+	chatInsert := sq.Insert(chats).
+		PlaceholderFormat(sq.Dollar).
+		Columns(chatName, createdAt).
+		Values(name, time.Now()).
+		Suffix("RETURNING " + columnID)
+
+	query, args, err := chatInsert.ToSql()
+	if err != nil {
+		return 0, err
 	}
-	return fmt.Errorf("chat id=%d not found", id)
+	var id int64
+	if err = tx.QueryRow(ctx, query, args...).Scan(&id); err != nil {
+		return 0, err
+	}
+
+	return id, nil
+}
+
+func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatID int64, user model.User) error {
+	chatUserInsert := sq.Insert(chatUsers).
+		PlaceholderFormat(sq.Dollar).
+		Columns(columnChatID, userID, username, createdAt).
+		Values(chatID, user.ID, user.Name, time.Now())
+
+	query, args, err := chatUserInsert.ToSql()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatID int64) error {
+	chatDelete := sq.Delete(chats).
+		PlaceholderFormat(sq.Dollar).
+		Where(sq.Eq{columnID: chatID})
+
+	query, args, err := chatDelete.ToSql()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) SendMessage(ctx context.Context, tx pgx.Tx, msg *model.Message) error {
+	repoMsg := converter.ToRepoFromMessage(msg)
+
+	msgInsert := sq.Insert(chatMessages).
+		PlaceholderFormat(sq.Dollar).
+		Columns(columnChatID, userID, text, createdAt).
+		Values(repoMsg.ChatID, repoMsg.UserID, repoMsg.Text, repoMsg.CreatedAt)
+
+	query, args, err := msgInsert.ToSql()
+	if err != nil {
+		return err
+	}
+
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return err
+	}
+
+	return nil
 }

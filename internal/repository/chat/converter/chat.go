@@ -7,7 +7,8 @@ import (
 
 func ToRepoFromMessage(msg *model.Message) repoModel.Message {
 	return repoModel.Message{
-		From:      msg.From,
+		ChatID:    msg.ChatID,
+		UserID:    msg.UserID,
 		Text:      msg.Text,
 		CreatedAt: msg.CreatedAt,
 	}

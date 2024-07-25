@@ -21,7 +21,7 @@ func NewImplementation(chatService service.ChatService) *Implementation {
 }
 
 func (i *Implementation) Create(ctx context.Context, req *desc.CreateRequest) (*desc.CreateResponse, error) {
-	id, err := i.chatService.Create(ctx, req.Usernames)
+	id, err := i.chatService.Create(ctx, converter.ToChatFromDesc(req))
 	if err != nil {
 		return nil, err
 	}
@@ -40,7 +40,7 @@ func (i *Implementation) Delete(ctx context.Context, req *desc.DeleteRequest) (*
 }
 
 func (i *Implementation) SendMessage(ctx context.Context, req *desc.SendRequest) (*emptypb.Empty, error) {
-	if err := i.chatService.SendMessage(ctx, req.Id, converter.ToChatMessageFromDesc(req.Message)); err != nil {
+	if err := i.chatService.SendMessage(ctx, converter.ToChatMessageFromDesc(req)); err != nil {
 		return nil, err
 	}
 
