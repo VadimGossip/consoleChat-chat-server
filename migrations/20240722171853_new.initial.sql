@@ -2,14 +2,14 @@
 -- +goose StatementBegin
 create table chats(
     id         serial primary key,
-    chat_name  varchar(255) not null unique,
+    chat_name  text not null unique,
     created_at timestamp default now() not null
 );
 
 create table chat_users(
     chat_id    int not null,
     user_id    int not null,
-    user_name  varchar(255) not null,
+    username  text not null,
     created_at timestamp default now() not null,
     primary key (chat_id, user_id)
 );
@@ -21,7 +21,7 @@ create table chat_messages (
     id serial  primary key,
     chat_id    int not null,
     user_id    int not null,
-    text       varchar(2000) not null,
+    text       text not null,
     created_at timestamp default now() not null
 );
 

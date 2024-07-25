@@ -12,6 +12,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+const (
+	chats        string = "chats"
+	columnId     string = "id"
+	chatName     string = "chat_name"
+	createdAt    string = "created_at"
+	chatUsers    string = "chat_users"
+	chatId       string = "chat_id"
+	userId       string = "user_id"
+	username     string = "username"
+	chatMessages string = "chat_messages"
+	text         string = "text"
+)
+
 var _ def.ChatRepository = (*repository)(nil)
 
 type repository struct {
@@ -39,11 +52,11 @@ func (r *repository) StopTx(ctx context.Context, tx pgx.Tx, err error) error {
 }
 
 func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (int64, error) {
-	chatInsert := sq.Insert("chats").
+	chatInsert := sq.Insert(chats).
 		PlaceholderFormat(sq.Dollar).
-		Columns("chat_name", "created_at").
+		Columns(chatName, createdAt).
 		Values(name, time.Now()).
-		Suffix("RETURNING id")
+		Suffix("RETURNING " + columnId)
 
 	query, args, err := chatInsert.ToSql()
 	if err != nil {
@@ -58,9 +71,9 @@ func (r *repository) CreateChat(ctx context.Context, tx pgx.Tx, name string) (in
 }
 
 func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatID int64, user model.User) error {
-	chatUserInsert := sq.Insert("chat_users").
+	chatUserInsert := sq.Insert(chatUsers).
 		PlaceholderFormat(sq.Dollar).
-		Columns("chat_id", "user_id", "user_name", "created_at").
+		Columns(chatId, userId, username, createdAt).
 		Values(chatID, user.ID, user.Name, time.Now())
 
 	query, args, err := chatUserInsert.ToSql()
@@ -75,9 +88,9 @@ func (r *repository) CreateChatUser(ctx context.Context, tx pgx.Tx, chatID int64
 }
 
 func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatID int64) error {
-	chatDelete := sq.Delete("chats").
+	chatDelete := sq.Delete(chats).
 		PlaceholderFormat(sq.Dollar).
-		Where(sq.Eq{"id": chatID})
+		Where(sq.Eq{columnId: chatID})
 
 	query, args, err := chatDelete.ToSql()
 	if err != nil {
@@ -94,9 +107,9 @@ func (r *repository) Delete(ctx context.Context, tx pgx.Tx, chatID int64) error 
 func (r *repository) SendMessage(ctx context.Context, tx pgx.Tx, msg *model.Message) error {
 	repoMsg := converter.ToRepoFromMessage(msg)
 
-	msgInsert := sq.Insert("chat_messages").
+	msgInsert := sq.Insert(chatMessages).
 		PlaceholderFormat(sq.Dollar).
-		Columns("chat_id", "user_id", "text", "created_at").
+		Columns(chatId, userId, text, createdAt).
 		Values(repoMsg.ChatID, repoMsg.UserID, repoMsg.Text, repoMsg.CreatedAt)
 
 	query, args, err := msgInsert.ToSql()
