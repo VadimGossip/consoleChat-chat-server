@@ -10,3 +10,8 @@ type Message struct {
 	Text      string
 	CreatedAt time.Time
 }
+
+type User struct {
+	ID   int64
+	Name string
+}
