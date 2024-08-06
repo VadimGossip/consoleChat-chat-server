@@ -17,14 +17,14 @@ func (s *service) SendMessage(ctx context.Context, msg *model.Message) error {
 		if txErr = s.chatRepository.SendMessage(ctx, msg); txErr != nil {
 			return txErr
 		}
-
-		if txErr = s.auditService.Create(ctx, &model.Audit{
+		txErr = s.auditService.Create(ctx, &model.Audit{
 			Action:     "send message",
 			CallParams: fmt.Sprintf("msg %+v", msg),
-		}); txErr != nil {
+		})
+		if txErr != nil {
 			return txErr
 		}
 
-		return txErr
+		return nil
 	})
 }
