@@ -13,3 +13,10 @@ func ToRepoFromMessage(msg *model.Message) repoModel.Message {
 		CreatedAt: msg.CreatedAt,
 	}
 }
+
+func ToRepoFromUser(user model.User) repoModel.User {
+	return repoModel.User{
+		ID:   user.ID,
+		Name: user.Name,
+	}
+}

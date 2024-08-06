@@ -11,3 +11,7 @@ type ChatService interface {
 	Delete(ctx context.Context, chatID int64) error
 	SendMessage(ctx context.Context, msg *model.Message) error
 }
+
+type AuditService interface {
+	Create(ctx context.Context, audit *model.Audit) error
+}
