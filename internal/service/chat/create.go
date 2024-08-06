@@ -26,10 +26,14 @@ func (s *service) Create(ctx context.Context, chat *model.Chat) (int64, error) {
 			}
 		}
 
-		return s.auditService.Create(ctx, &model.Audit{
+		if txErr = s.auditService.Create(ctx, &model.Audit{
 			Action:     "create chat",
 			CallParams: fmt.Sprintf("chat %+v", chat),
-		})
+		}); txErr != nil {
+			return txErr
+		}
+
+		return nil
 	})
 
 	if err != nil {

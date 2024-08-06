@@ -13,9 +13,14 @@ func (s *service) Delete(ctx context.Context, chatID int64) error {
 		if txErr = s.chatRepository.Delete(ctx, chatID); txErr != nil {
 			return txErr
 		}
-		return s.auditService.Create(ctx, &model.Audit{
+
+		if txErr = s.auditService.Create(ctx, &model.Audit{
 			Action:     "delete chat",
 			CallParams: fmt.Sprintf("chatID %d", chatID),
-		})
+		}); txErr != nil {
+			return txErr
+		}
+
+		return nil
 	})
 }
