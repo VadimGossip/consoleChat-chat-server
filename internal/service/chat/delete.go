@@ -21,6 +21,6 @@ func (s *service) Delete(ctx context.Context, chatID int64) error {
 			return txErr
 		}
 
-		return nil
+		return txErr
 	})
 }

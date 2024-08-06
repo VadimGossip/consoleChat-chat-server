@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+
 	sq "github.com/Masterminds/squirrel"
 
 	"github.com/VadimGossip/consoleChat-chat-server/internal/client/db"

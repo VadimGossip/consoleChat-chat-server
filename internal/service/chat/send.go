@@ -25,6 +25,6 @@ func (s *service) SendMessage(ctx context.Context, msg *model.Message) error {
 			return txErr
 		}
 
-		return nil
+		return txErr
 	})
 }

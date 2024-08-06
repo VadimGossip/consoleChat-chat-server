@@ -33,7 +33,7 @@ func (s *service) Create(ctx context.Context, chat *model.Chat) (int64, error) {
 			return txErr
 		}
 
-		return nil
+		return txErr
 	})
 
 	if err != nil {
