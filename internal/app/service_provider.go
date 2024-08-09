@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/VadimGossip/platform_common/pkg/closer"
+	"github.com/VadimGossip/platform_common/pkg/db/postgres"
+	"github.com/VadimGossip/platform_common/pkg/db/postgres/pg"
+	"github.com/VadimGossip/platform_common/pkg/db/postgres/transaction"
+	"github.com/sirupsen/logrus"
+
 	"github.com/VadimGossip/consoleChat-chat-server/internal/api/chat"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/client/db"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/client/db/pg"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/client/db/transaction"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/closer"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	auditRepo "github.com/VadimGossip/consoleChat-chat-server/internal/repository/audit"
@@ -17,14 +19,13 @@ import (
 	"github.com/VadimGossip/consoleChat-chat-server/internal/service"
 	auditService "github.com/VadimGossip/consoleChat-chat-server/internal/service/audit"
 	chatService "github.com/VadimGossip/consoleChat-chat-server/internal/service/chat"
-	"github.com/sirupsen/logrus"
 )
 
 type serviceProvider struct {
 	cfg *model.Config
 
-	dbClient  db.Client
-	txManager db.TxManager
+	dbClient  postgres.Client
+	txManager postgres.TxManager
 	auditRepo repository.AuditRepository
 	chatRepo  repository.ChatRepository
 
@@ -38,7 +39,7 @@ func newServiceProvider(cfg *model.Config) *serviceProvider {
 	return &serviceProvider{cfg: cfg}
 }
 
-func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
+func (s *serviceProvider) DBClient(ctx context.Context) postgres.Client {
 	if s.dbClient == nil {
 		dbDSN := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s", s.cfg.Db.Host, s.cfg.Db.Port, s.cfg.Db.Name, s.cfg.Db.Username, s.cfg.Db.Password, s.cfg.Db.SSLMode)
 		cl, err := pg.New(ctx, dbDSN)
@@ -56,7 +57,7 @@ func (s *serviceProvider) DBClient(ctx context.Context) db.Client {
 	return s.dbClient
 }
 
-func (s *serviceProvider) TxManager(ctx context.Context) db.TxManager {
+func (s *serviceProvider) TxManager(ctx context.Context) postgres.TxManager {
 	if s.txManager == nil {
 		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
 	}

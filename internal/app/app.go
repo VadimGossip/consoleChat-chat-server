@@ -7,14 +7,15 @@ import (
 	"os"
 	"time"
 
-	"github.com/VadimGossip/consoleChat-chat-server/internal/closer"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
-	desc "github.com/VadimGossip/consoleChat-chat-server/pkg/chat_v1"
+	"github.com/VadimGossip/platform_common/pkg/closer"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
+
+	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
+	desc "github.com/VadimGossip/consoleChat-chat-server/pkg/chat_v1"
 )
 
 func init() {
