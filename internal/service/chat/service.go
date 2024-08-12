@@ -1,7 +1,7 @@
 package chat
 
 import (
-	"github.com/VadimGossip/consoleChat-chat-server/internal/client/db"
+	db "github.com/VadimGossip/platform_common/pkg/db/postgres"
 
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/service"
