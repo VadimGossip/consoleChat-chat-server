@@ -3,10 +3,12 @@ package interceptor
 import (
 	"context"
 	"fmt"
-	descGrpc "github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
+
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	descGrpc "github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
 )
 
 func BuildInterceptor(authGRPCClient descGrpc.AuthClient) grpc.UnaryServerInterceptor {

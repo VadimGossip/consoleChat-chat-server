@@ -9,12 +9,11 @@ import (
 	"github.com/VadimGossip/consoleChat-chat-server/internal/app"
 )
 
-var configDir = "config"
 var appName = "Console Chat Chat-Server"
 
 func main() {
 	ctx := context.Background()
-	a, err := app.NewApp(ctx, appName, configDir, time.Now())
+	a, err := app.NewApp(ctx, appName, time.Now())
 	if err != nil {
 		logrus.Fatalf("failed to init app[%s]: %s", appName, err)
 	}

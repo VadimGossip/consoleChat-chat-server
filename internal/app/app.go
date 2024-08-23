@@ -2,13 +2,10 @@ package app
 
 import (
 	"context"
-	"log"
 	"os"
 	"time"
 
-	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/platform_common/pkg/closer"
-	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 )
@@ -22,16 +19,13 @@ func init() {
 type App struct {
 	serviceProvider *serviceProvider
 	name            string
-	configDir       string
 	appStartedAt    time.Time
-	cfg             *model.Config
 	grpcServer      *grpc.Server
 }
 
-func NewApp(ctx context.Context, name, configDir string, appStartedAt time.Time) (*App, error) {
+func NewApp(ctx context.Context, name string, appStartedAt time.Time) (*App, error) {
 	a := &App{
 		name:         name,
-		configDir:    configDir,
 		appStartedAt: appStartedAt,
 	}
 
@@ -44,7 +38,6 @@ func NewApp(ctx context.Context, name, configDir string, appStartedAt time.Time)
 
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
-		//	a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
 	}
@@ -55,14 +48,6 @@ func (a *App) initDeps(ctx context.Context) error {
 		}
 	}
 
-	return nil
-}
-
-func (a *App) initConfig(_ context.Context) error {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 	return nil
 }
 

@@ -2,13 +2,14 @@ package auth
 
 import (
 	"context"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
 
-	descAccess "github.com/VadimGossip/concoleChat-auth/pkg/access_v1"
-	descGrpc "github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+
+	descAccess "github.com/VadimGossip/concoleChat-auth/pkg/access_v1"
+	descGrpc "github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
 )
 
 type client struct {

@@ -3,7 +3,6 @@ package tests
 import (
 	"context"
 	"fmt"
-
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v6"
