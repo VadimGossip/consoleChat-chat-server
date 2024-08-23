@@ -2,20 +2,15 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"net"
+	"log"
 	"os"
 	"time"
 
+	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	"github.com/VadimGossip/platform_common/pkg/closer"
+	"github.com/joho/godotenv"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
-	"google.golang.org/grpc/reflection"
-
-	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
-	desc "github.com/VadimGossip/consoleChat-chat-server/pkg/chat_v1"
 )
 
 func init() {
@@ -64,43 +59,15 @@ func (a *App) initDeps(ctx context.Context) error {
 }
 
 func (a *App) initConfig(_ context.Context) error {
-	cfg, err := config.Init(a.configDir)
+	err := godotenv.Load()
 	if err != nil {
-		return fmt.Errorf("[%s] config initialization error: %s", a.name, err)
+		log.Fatal("Error loading .env file")
 	}
-	a.cfg = cfg
-	logrus.Infof("[%s] got config: [%+v]", a.name, *a.cfg)
 	return nil
 }
 
 func (a *App) initServiceProvider(_ context.Context) error {
-	a.serviceProvider = newServiceProvider(a.cfg)
-	return nil
-}
-
-func (a *App) initGRPCServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
-
-	reflection.Register(a.grpcServer)
-
-	desc.RegisterChatV1Server(a.grpcServer, a.serviceProvider.UserImpl(ctx))
-
-	return nil
-}
-
-func (a *App) runGRPCServer() error {
-	logrus.Infof("[grpc/server] Starting on port: %d", a.cfg.AppGrpcServer.Port)
-
-	list, err := net.Listen("tcp", fmt.Sprintf(":%d", a.cfg.AppGrpcServer.Port))
-	if err != nil {
-		return err
-	}
-
-	err = a.grpcServer.Serve(list)
-	if err != nil {
-		return err
-	}
-
+	a.serviceProvider = newServiceProvider()
 	return nil
 }
 
