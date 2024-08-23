@@ -2,8 +2,9 @@ package app
 
 import (
 	"context"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
 	"net"
+
+	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
 
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
