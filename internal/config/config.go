@@ -7,3 +7,7 @@ type GRPCConfig interface {
 type PgConfig interface {
 	DSN() string
 }
+
+type AuthGRPCClientConfig interface {
+	Address() string
+}

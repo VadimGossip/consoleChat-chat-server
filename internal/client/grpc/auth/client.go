@@ -2,6 +2,7 @@ package auth
 
 import (
 	"context"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
 
 	descAccess "github.com/VadimGossip/concoleChat-auth/pkg/access_v1"
 	descGrpc "github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
@@ -14,8 +15,8 @@ type client struct {
 	cl descAccess.AccessV1Client
 }
 
-func NewClient(target string) (descGrpc.AuthClient, error) {
-	conn, err := grpc.NewClient(target, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewClient(authGRPCClientConfig config.AuthGRPCClientConfig) (descGrpc.AuthClient, error) {
+	conn, err := grpc.NewClient(authGRPCClientConfig.Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, errors.Errorf("failed to connect to grpc server: %v", err)
 	}

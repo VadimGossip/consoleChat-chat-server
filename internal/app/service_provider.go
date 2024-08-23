@@ -14,6 +14,7 @@ import (
 	"github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc/auth"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
+	clientCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/client"
 	dbCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/db"
 	serverCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/server"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
@@ -25,8 +26,9 @@ import (
 )
 
 type serviceProvider struct {
-	grpcConfig config.GRPCConfig
-	pgConfig   config.PgConfig
+	grpcConfig           config.GRPCConfig
+	pgConfig             config.PgConfig
+	authGRPCClientConfig config.AuthGRPCClientConfig
 
 	pgDbClient postgres.Client
 	txManager  postgres.TxManager
@@ -69,6 +71,19 @@ func (s *serviceProvider) PGConfig() config.PgConfig {
 	}
 
 	return s.pgConfig
+}
+
+func (s *serviceProvider) AuthGRPCClientConfig() config.AuthGRPCClientConfig {
+	if s.authGRPCClientConfig == nil {
+		cfg, err := clientCfg.NewGRPCConfig()
+		if err != nil {
+			log.Fatalf("failed to get authGRPCClientConfig: %s", err)
+		}
+
+		s.authGRPCClientConfig = cfg
+	}
+
+	return s.authGRPCClientConfig
 }
 
 func (s *serviceProvider) PgDbClient(ctx context.Context) postgres.Client {
@@ -126,7 +141,7 @@ func (s *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 
 func (s *serviceProvider) AuthGRPCClient() grpc.AuthClient {
 	if s.authGRPCClient == nil {
-		grpcAuthClient, err := auth.NewClient("localhost:8086")
+		grpcAuthClient, err := auth.NewClient(s.AuthGRPCClientConfig())
 		if err != nil {
 			logrus.Fatalf("failed to create access grpc client: %s", err)
 		}
