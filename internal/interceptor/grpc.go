@@ -21,10 +21,6 @@ func NewInterceptor(authGRPCClient descGrpc.AuthClient) *interceptor {
 	return &interceptor{authGRPCClient: authGRPCClient}
 }
 
-type validator interface {
-	Validate() error
-}
-
 func (i *interceptor) Hook() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
