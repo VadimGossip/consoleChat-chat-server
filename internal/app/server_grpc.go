@@ -4,8 +4,6 @@ import (
 	"context"
 	"net"
 
-	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
-
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -15,7 +13,7 @@ import (
 )
 
 func (a *App) initGRPCServer(ctx context.Context) error {
-	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()), grpc.UnaryInterceptor(interceptor.BuildInterceptor(a.serviceProvider.AuthGRPCClient())))
+	a.grpcServer = grpc.NewServer(grpc.Creds(insecure.NewCredentials()), grpc.UnaryInterceptor(a.serviceProvider.GRPCInterceptor().Hook()))
 
 	reflection.Register(a.grpcServer)
 	desc.RegisterChatV1Server(a.grpcServer, a.serviceProvider.UserImpl(ctx))

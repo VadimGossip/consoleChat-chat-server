@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 
+	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
 	"github.com/VadimGossip/platform_common/pkg/closer"
 	"github.com/VadimGossip/platform_common/pkg/db/postgres"
 	"github.com/VadimGossip/platform_common/pkg/db/postgres/pg"
@@ -38,7 +39,8 @@ type serviceProvider struct {
 	auditService service.AuditService
 	chatService  service.ChatService
 
-	authGRPCClient grpc.AuthClient
+	authGRPCClient  grpc.AuthClient
+	grpcInterceptor interceptor.GRPCInterceptor
 
 	chatImpl *chat.Implementation
 }
@@ -148,6 +150,14 @@ func (s *serviceProvider) AuthGRPCClient() grpc.AuthClient {
 		s.authGRPCClient = grpcAuthClient
 	}
 	return s.authGRPCClient
+}
+
+func (s *serviceProvider) GRPCInterceptor() interceptor.GRPCInterceptor {
+	if s.grpcInterceptor == nil {
+		s.grpcInterceptor = interceptor.NewInterceptor(s.AuthGRPCClient())
+	}
+
+	return s.grpcInterceptor
 }
 
 func (s *serviceProvider) UserImpl(ctx context.Context) *chat.Implementation {
