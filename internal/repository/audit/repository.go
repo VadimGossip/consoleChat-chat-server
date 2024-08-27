@@ -4,11 +4,10 @@ import (
 	"context"
 
 	sq "github.com/Masterminds/squirrel"
-	db "github.com/VadimGossip/platform_common/pkg/db/postgres"
-
 	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
 	def "github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository/audit/converter"
+	db "github.com/VadimGossip/platform_common/pkg/db/postgres"
 )
 
 const (

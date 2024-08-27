@@ -2,9 +2,9 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log"
 
+	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
 	"github.com/VadimGossip/platform_common/pkg/closer"
 	"github.com/VadimGossip/platform_common/pkg/db/postgres"
 	"github.com/VadimGossip/platform_common/pkg/db/postgres/pg"
@@ -12,7 +12,12 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/VadimGossip/consoleChat-chat-server/internal/api/chat"
-	"github.com/VadimGossip/consoleChat-chat-server/internal/model"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc/auth"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/config"
+	clientCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/client"
+	dbCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/db"
+	serverCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/server"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	auditRepo "github.com/VadimGossip/consoleChat-chat-server/internal/repository/audit"
 	chatRepo "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat"
@@ -22,27 +27,70 @@ import (
 )
 
 type serviceProvider struct {
-	cfg *model.Config
+	grpcConfig           config.GRPCConfig
+	pgConfig             config.PgConfig
+	authGRPCClientConfig config.AuthGRPCClientConfig
 
-	dbClient  postgres.Client
-	txManager postgres.TxManager
-	auditRepo repository.AuditRepository
-	chatRepo  repository.ChatRepository
+	pgDbClient postgres.Client
+	txManager  postgres.TxManager
+	auditRepo  repository.AuditRepository
+	chatRepo   repository.ChatRepository
 
 	auditService service.AuditService
 	chatService  service.ChatService
 
+	authGRPCClient  grpc.AuthClient
+	grpcInterceptor interceptor.GRPCInterceptor
+
 	chatImpl *chat.Implementation
 }
 
-func newServiceProvider(cfg *model.Config) *serviceProvider {
-	return &serviceProvider{cfg: cfg}
+func newServiceProvider() *serviceProvider {
+	return &serviceProvider{}
 }
 
-func (s *serviceProvider) DBClient(ctx context.Context) postgres.Client {
-	if s.dbClient == nil {
-		dbDSN := fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=%s", s.cfg.Db.Host, s.cfg.Db.Port, s.cfg.Db.Name, s.cfg.Db.Username, s.cfg.Db.Password, s.cfg.Db.SSLMode)
-		cl, err := pg.New(ctx, dbDSN)
+func (s *serviceProvider) GRPCConfig() config.GRPCConfig {
+	if s.grpcConfig == nil {
+		cfg, err := serverCfg.NewGRPCConfig()
+		if err != nil {
+			log.Fatalf("failed to get grpcConfig: %s", err)
+		}
+
+		s.grpcConfig = cfg
+	}
+
+	return s.grpcConfig
+}
+
+func (s *serviceProvider) PGConfig() config.PgConfig {
+	if s.pgConfig == nil {
+		cfg, err := dbCfg.NewPGConfig()
+		if err != nil {
+			log.Fatalf("failed to get pgConfig: %s", err)
+		}
+
+		s.pgConfig = cfg
+	}
+
+	return s.pgConfig
+}
+
+func (s *serviceProvider) AuthGRPCClientConfig() config.AuthGRPCClientConfig {
+	if s.authGRPCClientConfig == nil {
+		cfg, err := clientCfg.NewGRPCConfig()
+		if err != nil {
+			log.Fatalf("failed to get authGRPCClientConfig: %s", err)
+		}
+
+		s.authGRPCClientConfig = cfg
+	}
+
+	return s.authGRPCClientConfig
+}
+
+func (s *serviceProvider) PgDbClient(ctx context.Context) postgres.Client {
+	if s.pgDbClient == nil {
+		cl, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
 			logrus.Fatalf("failed to create db client: %s", err)
 		}
@@ -51,15 +99,15 @@ func (s *serviceProvider) DBClient(ctx context.Context) postgres.Client {
 			log.Fatalf("ping error: %s", err)
 		}
 		closer.Add(cl.Close)
-		s.dbClient = cl
+		s.pgDbClient = cl
 	}
 
-	return s.dbClient
+	return s.pgDbClient
 }
 
 func (s *serviceProvider) TxManager(ctx context.Context) postgres.TxManager {
 	if s.txManager == nil {
-		s.txManager = transaction.NewTransactionManager(s.DBClient(ctx).DB())
+		s.txManager = transaction.NewTransactionManager(s.PgDbClient(ctx).DB())
 	}
 
 	return s.txManager
@@ -67,7 +115,7 @@ func (s *serviceProvider) TxManager(ctx context.Context) postgres.TxManager {
 
 func (s *serviceProvider) AuditRepository(ctx context.Context) repository.AuditRepository {
 	if s.auditRepo == nil {
-		s.auditRepo = auditRepo.NewRepository(s.DBClient(ctx))
+		s.auditRepo = auditRepo.NewRepository(s.PgDbClient(ctx))
 	}
 	return s.auditRepo
 }
@@ -81,7 +129,7 @@ func (s *serviceProvider) AuditService(ctx context.Context) service.AuditService
 
 func (s *serviceProvider) chatRepository(ctx context.Context) repository.ChatRepository {
 	if s.chatRepo == nil {
-		s.chatRepo = chatRepo.NewRepository(s.DBClient(ctx))
+		s.chatRepo = chatRepo.NewRepository(s.PgDbClient(ctx))
 	}
 	return s.chatRepo
 }
@@ -91,6 +139,25 @@ func (s *serviceProvider) ChatService(ctx context.Context) service.ChatService {
 		s.chatService = chatService.NewService(s.chatRepository(ctx), s.AuditService(ctx), s.TxManager(ctx))
 	}
 	return s.chatService
+}
+
+func (s *serviceProvider) AuthGRPCClient() grpc.AuthClient {
+	if s.authGRPCClient == nil {
+		grpcAuthClient, err := auth.NewClient(s.AuthGRPCClientConfig())
+		if err != nil {
+			logrus.Fatalf("failed to create access grpc client: %s", err)
+		}
+		s.authGRPCClient = grpcAuthClient
+	}
+	return s.authGRPCClient
+}
+
+func (s *serviceProvider) GRPCInterceptor() interceptor.GRPCInterceptor {
+	if s.grpcInterceptor == nil {
+		s.grpcInterceptor = interceptor.NewInterceptor(s.AuthGRPCClient())
+	}
+
+	return s.grpcInterceptor
 }
 
 func (s *serviceProvider) UserImpl(ctx context.Context) *chat.Implementation {
