@@ -2,8 +2,10 @@ package app
 
 import (
 	"context"
+	"log"
 	"time"
 
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
 
 	"github.com/VadimGossip/platform_common/pkg/closer"
@@ -29,8 +31,17 @@ func NewApp(ctx context.Context, name string, appStartedAt time.Time) (*App, err
 	return a, nil
 }
 
+func (a *App) initConfig(_ context.Context) error {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	return nil
+}
+
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
+		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
 	}

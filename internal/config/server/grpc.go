@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/VadimGossip/consoleChat-chat-server/internal/logger"
 	"github.com/pkg/errors"
 )
 

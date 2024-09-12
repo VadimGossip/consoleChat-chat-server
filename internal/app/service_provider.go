@@ -38,8 +38,8 @@ type serviceProvider struct {
 	auditService service.AuditService
 	chatService  service.ChatService
 
-	authGRPCClient  grpc.AuthClient
-	grpcInterceptor interceptor.GRPCInterceptor
+	authGRPCClient       grpc.AuthClient
+	authCheckInterceptor interceptor.AuthCheckInterceptor
 
 	chatImpl *chat.Implementation
 }
@@ -151,12 +151,12 @@ func (s *serviceProvider) AuthGRPCClient() grpc.AuthClient {
 	return s.authGRPCClient
 }
 
-func (s *serviceProvider) GRPCInterceptor() interceptor.GRPCInterceptor {
-	if s.grpcInterceptor == nil {
-		s.grpcInterceptor = interceptor.NewInterceptor(s.AuthGRPCClient())
+func (s *serviceProvider) AuthCheckInterceptor() interceptor.AuthCheckInterceptor {
+	if s.authCheckInterceptor == nil {
+		s.authCheckInterceptor = interceptor.NewInterceptor(s.AuthGRPCClient())
 	}
 
-	return s.grpcInterceptor
+	return s.authCheckInterceptor
 }
 
 func (s *serviceProvider) UserImpl(ctx context.Context) *chat.Implementation {
