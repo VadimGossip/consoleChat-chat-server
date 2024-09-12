@@ -2,19 +2,12 @@ package app
 
 import (
 	"context"
-	"os"
 	"time"
 
-	"github.com/VadimGossip/platform_common/pkg/closer"
-	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc"
-)
 
-func init() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.InfoLevel)
-}
+	"github.com/VadimGossip/platform_common/pkg/closer"
+)
 
 type App struct {
 	serviceProvider *serviceProvider

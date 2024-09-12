@@ -5,8 +5,8 @@ import (
 	"os"
 	"strconv"
 
+	"github.com/VadimGossip/consoleChat-chat-server/internal/logger"
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -44,7 +44,7 @@ func NewGRPCConfig() (*authGRPCClientConfig, error) {
 		return nil, fmt.Errorf("authGRPCClientConfig set from env err: %s", err)
 	}
 
-	logrus.Infof("authGRPCClientConfig: [%+v]", *cfg)
+	logger.Infof("authGRPCClientConfig: [%+v]", *cfg)
 	return cfg, nil
 }
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"net"
 
-	"github.com/sirupsen/logrus"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/logger"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
@@ -26,7 +26,7 @@ func (a *App) runGRPCServer() error {
 	if err != nil {
 		return err
 	}
-	logrus.Infof("[%s] GRPC server is running on: %s", a.name, a.serviceProvider.GRPCConfig().Address())
+	logger.Infof("[%s] GRPC server is running on: %s", a.name, a.serviceProvider.GRPCConfig().Address())
 
 	err = a.grpcServer.Serve(list)
 	if err != nil {

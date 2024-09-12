@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -40,7 +39,7 @@ func NewGRPCConfig() (*grpcConfig, error) {
 		return nil, fmt.Errorf("grpcConfig set from env err: %s", err)
 	}
 
-	logrus.Infof("grpcConfig: [%+v]", *cfg)
+	logger.Infof("grpcConfig: [%+v]", *cfg)
 	return cfg, nil
 }
 
