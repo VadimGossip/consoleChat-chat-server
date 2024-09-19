@@ -9,19 +9,19 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-type GRPCInterceptor interface {
+type AuthCheckInterceptor interface {
 	Hook() grpc.UnaryServerInterceptor
 }
 
-type interceptor struct {
+type authCheckInterceptor struct {
 	authGRPCClient descGrpc.AuthClient
 }
 
-func NewInterceptor(authGRPCClient descGrpc.AuthClient) *interceptor {
-	return &interceptor{authGRPCClient: authGRPCClient}
+func NewInterceptor(authGRPCClient descGrpc.AuthClient) *authCheckInterceptor {
+	return &authCheckInterceptor{authGRPCClient: authGRPCClient}
 }
 
-func (i *interceptor) Hook() grpc.UnaryServerInterceptor {
+func (i *authCheckInterceptor) Hook() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 		md, ok := metadata.FromIncomingContext(ctx)
 		if !ok {

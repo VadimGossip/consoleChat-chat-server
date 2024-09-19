@@ -17,29 +17,42 @@ services:
       - chat-server-network
     volumes:
       - postgres_volume:/var/lib/postgresql/data
-  chat-server:
-    image: chat-server
-    container_name: chat-server
-    environment:
-     - APP_PORT=8085
-     - DB_HOST=pg-chat-server
-     - DB_PORT=5432
-     - DB_USERNAME=postgres
-     - DB_NAME=chat-server-db
-     - DB_SSLMODE=disable
-     - DB_PASSWORD=postgres
-     - AUTH_GRPC_SERVER_HOST=localhost
-     - AUTH_GRPC_SERVER_PORT=8086
+#  chat-server:
+#    image: chat-server
+#    container_name: chat-server
+#    environment:
+#     - APP_PORT=8085
+#     - DB_HOST=pg-chat-server
+#     - DB_PORT=5432
+#     - DB_USERNAME=postgres
+#     - DB_NAME=chat-server-db
+#     - DB_SSLMODE=disable
+#     - DB_PASSWORD=postgres
+#     - AUTH_GRPC_SERVER_HOST=localhost
+#     - AUTH_GRPC_SERVER_PORT=8086
+#    ports:
+#      - 8085:8085
+#      - "6831:6831/udp"
+#    build:
+#      context: .
+#      dockerfile: Dockerfile
+#    restart: always
+#    networks:
+#     - chat-server-network
+#    depends_on:
+#      - pg-chat-server
+  jaeger:
+    image: jaegertracing/all-in-one:1.48
     ports:
-      - 8085:8085
-    build:
-      context: .
-      dockerfile: Dockerfile
-    restart: always
+      - "5775:5775/udp"
+      - "6831:6831/udp" # jaeger-client
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686" # web
+      - "14268:14268"
+      - "9411:9411"
     networks:
-     - chat-server-network
-    depends_on:
-      - pg-chat-server
+      - chat-server-network
   migrator:
     build:
       context: .

@@ -4,13 +4,6 @@ import (
 	"context"
 	"log"
 
-	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
-	"github.com/VadimGossip/platform_common/pkg/closer"
-	"github.com/VadimGossip/platform_common/pkg/db/postgres"
-	"github.com/VadimGossip/platform_common/pkg/db/postgres/pg"
-	"github.com/VadimGossip/platform_common/pkg/db/postgres/transaction"
-	"github.com/sirupsen/logrus"
-
 	"github.com/VadimGossip/consoleChat-chat-server/internal/api/chat"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/client/grpc/auth"
@@ -18,12 +11,18 @@ import (
 	clientCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/client"
 	dbCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/db"
 	serverCfg "github.com/VadimGossip/consoleChat-chat-server/internal/config/server"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/interceptor"
+	"github.com/VadimGossip/consoleChat-chat-server/internal/logger"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/repository"
 	auditRepo "github.com/VadimGossip/consoleChat-chat-server/internal/repository/audit"
 	chatRepo "github.com/VadimGossip/consoleChat-chat-server/internal/repository/chat"
 	"github.com/VadimGossip/consoleChat-chat-server/internal/service"
 	auditService "github.com/VadimGossip/consoleChat-chat-server/internal/service/audit"
 	chatService "github.com/VadimGossip/consoleChat-chat-server/internal/service/chat"
+	"github.com/VadimGossip/platform_common/pkg/closer"
+	"github.com/VadimGossip/platform_common/pkg/db/postgres"
+	"github.com/VadimGossip/platform_common/pkg/db/postgres/pg"
+	"github.com/VadimGossip/platform_common/pkg/db/postgres/transaction"
 )
 
 type serviceProvider struct {
@@ -39,8 +38,8 @@ type serviceProvider struct {
 	auditService service.AuditService
 	chatService  service.ChatService
 
-	authGRPCClient  grpc.AuthClient
-	grpcInterceptor interceptor.GRPCInterceptor
+	authGRPCClient       grpc.AuthClient
+	authCheckInterceptor interceptor.AuthCheckInterceptor
 
 	chatImpl *chat.Implementation
 }
@@ -92,7 +91,7 @@ func (s *serviceProvider) PgDbClient(ctx context.Context) postgres.Client {
 	if s.pgDbClient == nil {
 		cl, err := pg.New(ctx, s.PGConfig().DSN())
 		if err != nil {
-			logrus.Fatalf("failed to create db client: %s", err)
+			logger.Fatalf("failed to create db client: %s", err)
 		}
 
 		if err = cl.DB().Ping(ctx); err != nil {
@@ -145,19 +144,19 @@ func (s *serviceProvider) AuthGRPCClient() grpc.AuthClient {
 	if s.authGRPCClient == nil {
 		grpcAuthClient, err := auth.NewClient(s.AuthGRPCClientConfig())
 		if err != nil {
-			logrus.Fatalf("failed to create access grpc client: %s", err)
+			logger.Fatalf("failed to create access grpc client: %s", err)
 		}
 		s.authGRPCClient = grpcAuthClient
 	}
 	return s.authGRPCClient
 }
 
-func (s *serviceProvider) GRPCInterceptor() interceptor.GRPCInterceptor {
-	if s.grpcInterceptor == nil {
-		s.grpcInterceptor = interceptor.NewInterceptor(s.AuthGRPCClient())
+func (s *serviceProvider) AuthCheckInterceptor() interceptor.AuthCheckInterceptor {
+	if s.authCheckInterceptor == nil {
+		s.authCheckInterceptor = interceptor.NewInterceptor(s.AuthGRPCClient())
 	}
 
-	return s.grpcInterceptor
+	return s.authCheckInterceptor
 }
 
 func (s *serviceProvider) UserImpl(ctx context.Context) *chat.Implementation {

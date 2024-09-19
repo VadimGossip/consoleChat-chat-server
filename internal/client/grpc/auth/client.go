@@ -3,6 +3,8 @@ package auth
 import (
 	"context"
 
+	"github.com/grpc-ecosystem/grpc-opentracing/go/otgrpc"
+	"github.com/opentracing/opentracing-go"
 	"github.com/pkg/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -17,7 +19,9 @@ type client struct {
 }
 
 func NewClient(authGRPCClientConfig config.AuthGRPCClientConfig) (descGrpc.AuthClient, error) {
-	conn, err := grpc.NewClient(authGRPCClientConfig.Address(), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(authGRPCClientConfig.Address(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithUnaryInterceptor(otgrpc.OpenTracingClientInterceptor(opentracing.GlobalTracer())))
 	if err != nil {
 		return nil, errors.Errorf("failed to connect to grpc server: %v", err)
 	}

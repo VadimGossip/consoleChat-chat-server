@@ -2,19 +2,14 @@ package app
 
 import (
 	"context"
-	"os"
+	"log"
 	"time"
 
-	"github.com/VadimGossip/platform_common/pkg/closer"
-	"github.com/sirupsen/logrus"
+	"github.com/joho/godotenv"
 	"google.golang.org/grpc"
-)
 
-func init() {
-	logrus.SetFormatter(&logrus.JSONFormatter{})
-	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.InfoLevel)
-}
+	"github.com/VadimGossip/platform_common/pkg/closer"
+)
 
 type App struct {
 	serviceProvider *serviceProvider
@@ -36,8 +31,17 @@ func NewApp(ctx context.Context, name string, appStartedAt time.Time) (*App, err
 	return a, nil
 }
 
+func (a *App) initConfig(_ context.Context) error {
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	return nil
+}
+
 func (a *App) initDeps(ctx context.Context) error {
 	inits := []func(context.Context) error{
+		a.initConfig,
 		a.initServiceProvider,
 		a.initGRPCServer,
 	}
